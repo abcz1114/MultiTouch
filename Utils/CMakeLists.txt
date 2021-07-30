@@ -7,17 +7,14 @@ cmake_minimum_required(VERSION 3.10.2)
 
 # Declares and names the project.
 
-project(MultiTouch)
-
-add_subdirectory(Utils)
-include_directories(Utils)
+project(Utils)
 
 add_library(
-        MultiTouch SHARED
-        MultiTouch.cpp
+        Utils SHARED
+        Log.cpp
 )
 
 target_link_libraries(
-        MultiTouch
         Utils
+        Diligent-Common # logging
 )
