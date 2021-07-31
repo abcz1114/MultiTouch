@@ -50,20 +50,52 @@ implementation (.mm)
 
 // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/EventOverview/HandlingTouchEvents/HandlingTouchEvents.html#//apple_ref/doc/uid/10000060i-CH13-SW21
 
+- (NSPoint) getMouse {
+    NSPoint x = [[self window] mouseLocationOutsideOfEventStream];
+    // bottom is 0, top is height
+    // we need top is 0, bottom is height
+    x.y = [self bounds].size.height - x.y;
+    return x;
+}
+
 - (void)touchesBeganWithEvent:(NSEvent *)event {
-    [_renderer touchesBeganWithEvent:[event touchesMatchingPhase:NSTouchPhaseBegan inView:self]];
+    NSSet * touches = [event touchesMatchingPhase:NSTouchPhaseBegan inView:self];
+    NSArray *array = [touches allObjects];
+    NSUInteger numberOfTouches = [array count];
+    for (unsigned long i = 0; i < numberOfTouches; i++) {
+        NSTouch *touch = [array objectAtIndex:i];
+        [_renderer touchesBeganWithTouch:touch.identity AndPoint:[self getMouse]];
+    }
 }
 
 - (void)touchesMovedWithEvent:(NSEvent *)event {
-    [_renderer touchesMovedWithEvent:[event touchesMatchingPhase:NSTouchPhaseMoved inView:self]];
+    NSSet * touches = [event touchesMatchingPhase:NSTouchPhaseMoved inView:self];
+    NSArray *array = [touches allObjects];
+    NSUInteger numberOfTouches = [array count];
+    for (unsigned long i = 0; i < numberOfTouches; i++) {
+        NSTouch *touch = [array objectAtIndex:i];
+        [_renderer touchesMovedWithTouch:touch AndPoint:[self getMouse]];
+    }
 }
 
 - (void)touchesEndedWithEvent:(NSEvent *)event {
-    [_renderer touchesEndedWithEvent:[event touchesMatchingPhase:NSTouchPhaseEnded inView:self]];
+    NSSet * touches = [event touchesMatchingPhase:NSTouchPhaseEnded inView:self];
+    NSArray *array = [touches allObjects];
+    NSUInteger numberOfTouches = [array count];
+    for (unsigned long i = 0; i < numberOfTouches; i++) {
+        NSTouch *touch = [array objectAtIndex:i];
+        [_renderer touchesEndedWithTouch:touch AndPoint:[self getMouse]];
+    }
 }
 
 - (void)touchesCancelledWithEvent:(NSEvent *)event {
-    [_renderer touchesCancelledWithEvent:[event touchesMatchingPhase:NSTouchPhaseAny inView:self]];
+    NSSet * touches = [event touchesMatchingPhase:NSTouchPhaseCancelled inView:self];
+    NSArray *array = [touches allObjects];
+    NSUInteger numberOfTouches = [array count];
+    for (unsigned long i = 0; i < numberOfTouches; i++) {
+        NSTouch *touch = [array objectAtIndex:i];
+        [_renderer touchesCancelledWithTouch:touch AndPoint:[self getMouse]];
+    }
 }
 
 - (void) awakeFromNib
@@ -72,6 +104,8 @@ implementation (.mm)
     [self setAcceptsTouchEvents:YES];
     // ...
 }
+
+// ...
 ```
 
 inside a callback class, eg `_renderer`
@@ -89,10 +123,13 @@ interface (.h)
 }
 
 - (instancetype) init;
-- (void) touchesBeganWithEvent:(NSSet *) touches;
-- (void) touchesMovedWithEvent:(NSSet *) touches;
-- (void) touchesEndedWithEvent:(NSSet *) touches;
-- (void) touchesCancelledWithEvent:(NSSet *) touches;
+
+- (void) touchesBeganWithTouch:(NSTouch *)touch AndPoint:(NSPoint)point;
+- (void) touchesMovedWithTouch:(NSTouch *)touch AndPoint:(NSPoint)point;
+- (void) touchesEndedWithTouch:(NSTouch *)touch AndPoint:(NSPoint)point;
+- (void) touchesCancelledWithTouch:(NSTouch *)touch AndPoint:(NSPoint)point;
+
+// ...
 
 @end
 ```
@@ -105,61 +142,42 @@ implementation (.mm)
     return self;
 }
 
-- (void)touchesBeganWithEvent:(NSSet *) touches {
-    NSArray *array = [touches allObjects];
-    NSUInteger numberOfTouches = [array count];
-    for (unsigned long i = 0; i < numberOfTouches; i++) {
-        NSTouch *t = [array objectAtIndex:i];
-        multiTouch.addTouch(
-            ((NSInteger) t.identity),
-            t.normalizedPosition.x,
-            t.normalizedPosition.y
-        );
-        appInstance.onTouchEvent(multiTouch);
-    }
+- (void)touchesBeganWithTouch:(NSTouch *)touch AndPoint:(NSPoint)point {
+    multiTouch.addTouch(
+        ((NSInteger) touch.identity),
+        point.x,
+        point.y
+    );
+    appInstance.onTouchEvent(multiTouch);
 }
 
-- (void)touchesMovedWithEvent:(NSSet *) touches {
-    NSArray *array = [touches allObjects];
-    NSUInteger numberOfTouches = [array count];
-    for (unsigned long i = 0; i < numberOfTouches; i++) {
-        NSTouch *t = [array objectAtIndex:i];
-        multiTouch.moveTouch(
-            ((NSInteger) t.identity),
-            t.normalizedPosition.x,
-            t.normalizedPosition.y
-        );
-        appInstance.onTouchEvent(multiTouch);
-    }
+- (void)touchesMovedWithTouch:(NSTouch *)touch AndPoint:(NSPoint)point {
+    multiTouch.moveTouch(
+        ((NSInteger) touch.identity),
+        point.x,
+        point.y
+    );
+    appInstance.onTouchEvent(multiTouch);
 }
 
-- (void)touchesEndedWithEvent:(NSSet *) touches {
-    NSArray *array = [touches allObjects];
-    NSUInteger numberOfTouches = [array count];
-    for (unsigned long i = 0; i < numberOfTouches; i++) {
-        NSTouch *t = [array objectAtIndex:i];
-        multiTouch.removeTouch(
-            ((NSInteger) t.identity),
-            t.normalizedPosition.x,
-            t.normalizedPosition.y
-        );
-        appInstance.onTouchEvent(multiTouch);
-    }
+- (void)touchesEndedWithTouch:(NSTouch *)touch AndPoint:(NSPoint)point {
+    multiTouch.removeTouch(
+        ((NSInteger) touch.identity),
+        point.x,
+        point.y
+    );
+    appInstance.onTouchEvent(multiTouch);
 }
 
-- (void)touchesCancelledWithEvent:(NSSet *) touches {
-    NSArray *array = [touches allObjects];
-    NSUInteger numberOfTouches = [array count];
-    for (unsigned long i = 0; i < numberOfTouches; i++) {
-        NSTouch *t = [array objectAtIndex:i];
-        multiTouch.cancelTouch(
-            ((NSInteger) t.identity),
-            t.normalizedPosition.x,
-            t.normalizedPosition.y
-        );
-        appInstance.onTouchEvent(multiTouch);
-    }
+- (void)touchesCancelledWithTouch:(NSTouch *)touch AndPoint:(NSPoint)point {
+    multiTouch.cancelTouch(
+        ((NSInteger) touch.identity),
+        point.x,
+        point.y
+    );
+    appInstance.onTouchEvent(multiTouch);
 }
+// ...
 ```
 
 ### Android
