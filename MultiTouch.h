@@ -5,7 +5,7 @@
 #ifndef GRAPHICAL_TOOL_KIT_MOTIONEVENT_MULTITOUCH_H
 #define GRAPHICAL_TOOL_KIT_MOTIONEVENT_MULTITOUCH_H
 
-#include <Array.h>
+#include "Utils/Array.h"
 #include <string>
 
 class MultiTouch {
@@ -49,6 +49,8 @@ private:
     long index;
 
 public:
+
+    bool debug = false;
     
     TouchData & getTouchAt(long index);
     long getTouchCount();

@@ -9,8 +9,7 @@ cmake_minimum_required(VERSION 3.10.2)
 
 project(MultiTouch)
 
-add_subdirectory(Utils)
-include_directories(Utils)
+add_subdirectory(DiligentLog)
 
 add_library(
         MultiTouch SHARED
@@ -19,5 +18,5 @@ add_library(
 
 target_link_libraries(
         MultiTouch
-        Utils
+        Diligent-Log
 )

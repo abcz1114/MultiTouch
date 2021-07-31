@@ -58,7 +58,7 @@ void MultiTouch::tryPurgeTouch(MultiTouch::TouchContainer & touchContainer) {
 }
 
 void MultiTouch::addTouch(long identity, float x, float y, float size, float pressure) {
-    Log::Debug("adding touch with identity: ", identity);
+    if (debug) Log::Debug("adding touch with identity: ", identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
@@ -96,7 +96,7 @@ void MultiTouch::addTouch(long identity, float x, float y) {
 }
 
 void MultiTouch::moveTouch(long identity, float x, float y, float size, float pressure) {
-    Log::Debug("moving touch with identity: ", identity);
+    if (debug) Log::Debug("moving touch with identity: ", identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
@@ -130,7 +130,7 @@ void MultiTouch::moveTouch(long identity, float x, float y) {
 }
 
 void MultiTouch::removeTouch(long identity, float x, float y, float size, float pressure) {
-    Log::Debug("removing touch with identity: ", identity);
+    if (debug) Log::Debug("removing touch with identity: ", identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
@@ -165,7 +165,7 @@ void MultiTouch::removeTouch(long identity, float x, float y) {
 }
 
 void MultiTouch::cancelTouch(long identity, float x, float y, float size, float pressure) {
-    Log::Debug("cancelling touch with identity: ", identity);
+    if (debug) Log::Debug("cancelling touch with identity: ", identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];

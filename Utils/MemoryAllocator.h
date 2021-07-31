@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <new> // std::bad_alloc
 #include <algorithm>
-#include "Log.h"
+#include "../DiligentLog/Log.h"
 
 namespace MemoryAllocator {
     template<class T>
