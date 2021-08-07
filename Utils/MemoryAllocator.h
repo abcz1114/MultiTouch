@@ -60,14 +60,14 @@ namespace MemoryAllocator {
             copyFrom(other);
         }
 
-        MemoryAllocation &operator=(const MemoryAllocation<T> &other) {
+        MemoryAllocation<T> &operator=(const MemoryAllocation<T> &other) {
             deallocate();
             copyFrom(other);
             return *this;
         }
 
         template<typename U>
-        MemoryAllocation &operator=(const MemoryAllocation<U> &other) {
+        MemoryAllocation<T> &operator=(const MemoryAllocation<U> &other) {
             deallocate();
             copyFrom(other);
             return *this;
@@ -91,7 +91,7 @@ namespace MemoryAllocator {
             moveFrom(other);
         }
 
-        MemoryAllocation &operator=(MemoryAllocation<T> &&other) {
+        MemoryAllocation<T> &operator=(MemoryAllocation<T> &&other) {
             deallocate();
             std::swap(data, other.data);
             std::swap(capacity, other.capacity);
@@ -99,7 +99,7 @@ namespace MemoryAllocator {
         }
 
         template<typename U>
-        MemoryAllocation &operator=(MemoryAllocation<U> &&other) {
+        MemoryAllocation<T> &operator=(MemoryAllocation<U> &&other) {
             moveFrom(other);
             return *this;
         }
@@ -191,6 +191,49 @@ namespace MemoryAllocator {
             return data;
         }
 
+        void remove(size_t i) {
+            // dont remove if already removed
+            if (capacity <= i) return;
+
+            // deallocate if capacity is 1
+            if (capacity == 1) {
+                deallocate();
+                return;
+            }
+
+            // if removing from end, simply reallocate
+            if (capacity - 1 == i) {
+                reallocate(capacity-1);
+                return;
+            }
+            MemoryAllocation<T> tmp;
+            tmp.allocate(capacity-1);
+
+            if (i == 0) {
+                // if removing from front, simply move all data right by 1
+                for (size_t ii = 0; ii < tmp.capacity; ii++) {
+                    tmp.data[ii] = std::move(data[ii+1]);
+                }
+            } else {
+                // if removing from middle, then...
+                // first move 0 to i
+                for (size_t ii = 0; ii < tmp.capacity; ii++) {
+                    tmp.data[ii] = std::move(data[ii]);
+                }
+                // then move all ahead of middle data left by 1
+                for (size_t ii = i+1; ii < tmp.capacity; ii++) {
+                    tmp.data[ii-1] = std::move(data[ii]);
+                }
+            }
+            delete[] data;
+            data = tmp.data;
+            tmp.data = nullptr;
+            capacity = tmp.capacity;
+            tmp.capacity = 0;
+            capacityInBytes = sizeof_T * capacity;
+            tmp.capacityInBytes = 0;
+        }
+
         size_t getCapacity() const {
             return capacity;
         }
@@ -213,7 +256,7 @@ namespace MemoryAllocator {
             }
             data = new T[newCapacity];
             capacity = newCapacity;
-            capacityInBytes = sizeof_T * newCapacity;
+            capacityInBytes = sizeof_T * capacity;
             if (is_primitive<T>::value) {
                 // initialize array to zero if primitive
                 memset(data, 0, capacityInBytes);
@@ -230,7 +273,7 @@ namespace MemoryAllocator {
             }
             data = new T[newCapacity];
             capacity = newCapacity;
-            capacityInBytes = sizeof_T * newCapacity;
+            capacityInBytes = sizeof_T * capacity;
             for (size_t i = 0; i < capacity; i++) {
                 data[i] = initializer;
             }
@@ -254,7 +297,7 @@ namespace MemoryAllocator {
                 tmp.data = nullptr;
                 capacity = tmp.capacity;
                 tmp.capacity = 0;
-                capacityInBytes = sizeof_T * newCapacity;
+                capacityInBytes = sizeof_T * capacity;
                 tmp.capacityInBytes = 0;
             }
         }
@@ -278,7 +321,7 @@ namespace MemoryAllocator {
                 tmp.data = nullptr;
                 capacity = tmp.capacity;
                 tmp.capacity = 0;
-                capacityInBytes = sizeof_T * newCapacity;
+                capacityInBytes = sizeof_T * capacity;
                 tmp.capacityInBytes = 0;
             }
         }

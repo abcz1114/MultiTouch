@@ -20,14 +20,14 @@ public:
     template<typename U>
     Array(const Array<U> &other) : data(other.data), empty(other.empty) {}
 
-    Array &operator=(const Array<T> &other) {
+    Array<T> &operator=(const Array<T> &other) {
         data = other.data;
         empty = other.empty;
         return *this;
     }
 
     template<typename U>
-    Array &operator=(const Array<U> &other) {
+    Array<T> &operator=(const Array<U> &other) {
         data = other.data;
         empty = other.empty;
         return *this;
@@ -42,14 +42,14 @@ public:
         std::swap(empty, other.empty);
     }
 
-    Array &operator=(Array<T> &&other) {
+    Array<T> &operator=(Array<T> &&other) {
         data = std::move(other.data);
         std::swap(empty, other.empty);
         return *this;
     }
 
     template<typename U>
-    Array &operator=(Array<U> &&other) {
+    Array<T> &operator=(Array<U> &&other) {
         data = std::move(other.data);
         std::swap(empty, other.empty);
         return *this;
@@ -117,6 +117,10 @@ public:
 
     T *getData() const {
         return data.getData();
+    }
+
+    void remove(size_t i) {
+        data.remove(i);
     }
 };
 
