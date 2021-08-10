@@ -16,6 +16,10 @@ public:
 
     AutoResizingArray() = default;
 
+    AutoResizingArray(size_t pageSize) {
+        this->pageSize = pageSize;
+    };
+    
     AutoResizingArray(const AutoResizingArray<T> &other) : array(other.array), pageSize(other.pageSize), index(other.index) {}
 
     template<typename U>
@@ -94,20 +98,61 @@ public:
         array.moveTo(array_.array);
     }
 
-    T & operator[] (int index_) const {
+    template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
+    T & operator[] (int index_) {
         return array[index_];
     }
 
+    template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
+    const T & operator[] (int index_) const {
+        return array[index_];
+    }
+
+    template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
+    T operator[] (int index_) {
+        return array[index_];
+    }
+
+    template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
+    const T operator[] (int index_) const {
+        return array[index_];
+    }
+
+    template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
     void add(const T & data) {
         size_t capacity = array.getCapacity();
         if (capacity == index) array.resize(capacity + pageSize);
         array[index++] = data;
     }
 
+    template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
+    void add(T data) {
+        size_t capacity = array.getCapacity();
+        if (capacity == index) array.resize(capacity + pageSize);
+        array.operator[](index++) = data;
+    }
+
+    template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
     T & peek() {
         return array[index-1];
     }
 
+    template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
+    const T & peek() const {
+        return array[index-1];
+    }
+
+    template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
+    T peek() {
+        return array[index-1];
+    }
+
+    template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
+    const T peek() const {
+        return array[index-1];
+    }
+
+    template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
     T & remove() {
         T & val = peek();
         size_t capacity = array.getCapacity() - pageSize;
@@ -116,8 +161,41 @@ public:
         return val;
     }
 
-    T *getData() const {
+    template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
+    T remove() {
+        T val = peek();
+        size_t capacity = array.getCapacity() - pageSize;
+        if (capacity == index) array.resize(capacity);
+        index--;
+        return val;
+    }
+
+    T *getData() {
         return array.getData();
+    }
+
+    const T *getData() const {
+        return array.getData();
+    }
+    
+    size_t size() const {
+        return index;
+    }
+
+    T* begin() {
+        return array.begin();
+    }
+
+    const T* begin() const {
+        return array.begin();
+    }
+
+    T* end() {
+        return begin() + size();
+    }
+
+    const T* end() const {
+        return begin() + size();
     }
 };
 

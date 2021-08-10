@@ -111,16 +111,52 @@ public:
         data.moveTo(array.data);
     }
 
-    T & operator[] (int index) const {
+    template<typename TAG = T>
+    typename std::enable_if<std::is_pointer<TAG>::value, T&>::type operator[](size_t index) {
         return data[index];
+    }
+
+    template<typename TAG = T>
+    typename std::enable_if<!std::is_pointer<TAG>::value, T&>::type operator[](size_t index) {
+        return data[index];
+    }
+
+    template<typename TAG = T>
+    typename std::enable_if<std::is_pointer<TAG>::value, T const&>::type operator[](size_t index) const {
+        return data[index];
+    }
+
+    template<typename TAG = T>
+    typename std::enable_if<!std::is_pointer<TAG>::value, T const&>::type operator[](size_t index) const {
+        return data[index];
+    }
+
+    T *getData() {
+        return data.getData();
     }
 
     T *getData() const {
         return data.getData();
     }
 
-    void remove(size_t i) {
-        data.remove(i);
+    void remove(size_t index) {
+        data.remove(index);
+    }
+
+    T* begin() {
+        return data.begin();
+    }
+
+    const T* begin() const {
+        return data.begin();
+    }
+
+    T* end() {
+        return data.end();
+    }
+
+    const T* end() const {
+        return data.end();
     }
 };
 

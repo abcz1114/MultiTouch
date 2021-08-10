@@ -36,6 +36,11 @@ namespace MemoryAllocator {
                 "class T must have a public constructor T()"
         );
 
+        static_assert(
+                !std::is_reference<T>::value,
+                "T must not be a reference, for example < int & >"
+        );
+
         MemoryAllocation() {
             data = nullptr;
             capacity = 0;
@@ -180,20 +185,49 @@ namespace MemoryAllocator {
             deallocate();
         }
 
-        T &operator[](size_t index) const {
+        template<typename TAG = T>
+        typename std::enable_if<std::is_pointer<TAG>::value, T&>::type operator[](size_t index) {
             if (capacity <= index) {
                 Log::Error_And_Throw("index out of range: index: ", index, ", capacity: ", capacity);
             }
             return data[index];
         }
 
-        T *getData() const {
+        template<typename TAG = T>
+        typename std::enable_if<!std::is_pointer<TAG>::value, T&>::type operator[](size_t index) {
+            if (capacity <= index) {
+                Log::Error_And_Throw("index out of range: index: ", index, ", capacity: ", capacity);
+            }
+            return data[index];
+        }
+
+        template<typename TAG = T>
+        typename std::enable_if<std::is_pointer<TAG>::value, T const&>::type operator[](size_t index) const {
+            if (capacity <= index) {
+                Log::Error_And_Throw("index out of range: index: ", index, ", capacity: ", capacity);
+            }
+            return data[index];
+        }
+
+        template<typename TAG = T>
+        typename std::enable_if<!std::is_pointer<TAG>::value, T const&>::type operator[](size_t index) const {
+            if (capacity <= index) {
+                Log::Error_And_Throw("index out of range: index: ", index, ", capacity: ", capacity);
+            }
+            return data[index];
+        }
+
+        T *getData() {
             return data;
         }
 
-        void remove(size_t i) {
+        const T *getData() const {
+            return data;
+        }
+
+        void remove(size_t index) {
             // dont remove if already removed
-            if (capacity <= i) return;
+            if (capacity <= index) return;
 
             // deallocate if capacity is 1
             if (capacity == 1) {
@@ -202,14 +236,14 @@ namespace MemoryAllocator {
             }
 
             // if removing from end, simply reallocate
-            if (capacity - 1 == i) {
+            if (capacity - 1 == index) {
                 reallocate(capacity-1);
                 return;
             }
             MemoryAllocation<T> tmp;
             tmp.allocate(capacity-1);
 
-            if (i == 0) {
+            if (index == 0) {
                 // if removing from front, simply move all data right by 1
                 for (size_t ii = 0; ii < tmp.capacity; ii++) {
                     tmp.data[ii] = std::move(data[ii+1]);
@@ -221,7 +255,7 @@ namespace MemoryAllocator {
                     tmp.data[ii] = std::move(data[ii]);
                 }
                 // then move all ahead of middle data left by 1
-                for (size_t ii = i+1; ii < tmp.capacity; ii++) {
+                for (size_t ii = index+1; ii < tmp.capacity; ii++) {
                     tmp.data[ii-1] = std::move(data[ii]);
                 }
             }
@@ -254,13 +288,16 @@ namespace MemoryAllocator {
                         "please call deallocate() first"
                 );
             }
-            data = new T[newCapacity];
+            // use () to value initialize
+            //
+            // https://en.cppreference.com/w/cpp/language/value_initialization
+            // (2,6) when an object with dynamic storage duration is created
+            // by a new-expression with the initializer consisting of an empty
+            // pair of parentheses
+            //
+            data = new T[newCapacity]();
             capacity = newCapacity;
             capacityInBytes = sizeof_T * capacity;
-            if (is_primitive<T>::value) {
-                // initialize array to zero if primitive
-                memset(data, 0, capacityInBytes);
-            }
         }
         
         void allocate(size_t newCapacity, const T & initializer) {
@@ -331,6 +368,22 @@ namespace MemoryAllocator {
             data = nullptr;
             capacity = 0;
             capacityInBytes = 0;
+        }
+
+        T* begin() {
+            return data;
+        }
+
+        const T* begin() const {
+            return data;
+        }
+
+        T* end() {
+            return data + capacity;
+        }
+
+        const T* end() const {
+            return data + capacity;
         }
     };
 };
