@@ -110,7 +110,7 @@ namespace MemoryAllocator {
         }
 
         template<typename U>
-        void copyFrom(MemoryAllocation<U> &memoryAllocation) {
+        void copyFrom(const MemoryAllocation<U> &memoryAllocation) {
             static_assert(std::is_copy_constructible<T>::value &&
                           std::is_convertible<U &&, T>::value,
                           "T must be copy constructible and convertible from U");
