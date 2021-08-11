@@ -67,7 +67,7 @@ public:
     }
 
     bool isEmpty() const {
-        return array.isEmpty();
+        return index == 0;
     }
 
     size_t getCapacity() const {
