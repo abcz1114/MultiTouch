@@ -153,12 +153,12 @@ public:
     }
 
     template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
-    T & remove() {
-        T & val = peek();
+    T && remove() {
+        T && val = std::move(peek());
         size_t capacity = array.getCapacity() - pageSize;
         if (capacity == index) array.resize(capacity);
         index--;
-        return val;
+        return std::move(val);
     }
 
     template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
