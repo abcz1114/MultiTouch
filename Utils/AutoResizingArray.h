@@ -129,7 +129,7 @@ public:
     void add(T data) {
         size_t capacity = array.getCapacity();
         if (capacity == index) array.resize(capacity + pageSize);
-        array.operator[](index++) = data;
+        array[index++] = data;
     }
 
     template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
