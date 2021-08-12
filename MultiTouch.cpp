@@ -19,13 +19,19 @@ MultiTouch::TouchData(identity, x, y, size, 0, MultiTouch::NONE)
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, float x, float y, float size, float pressure, MultiTouch::TouchState state) {
+MultiTouch::TouchData::TouchData(long identity, float x, float y, float size, float pressure, MultiTouch::TouchState state):
+MultiTouch::TouchData(identity, x, y, size, pressure, state, false)
+{
+}
+
+MultiTouch::TouchData::TouchData(long identity, float x, float y, float size, float pressure, MultiTouch::TouchState state, bool moved) {
     this->identity = identity;
     this->x = x;
     this->y = y;
     this->size = size;
     this->pressure = pressure;
     this->state = state;
+    this->moved = moved;
 }
 
 MultiTouch::TouchContainer::TouchContainer() {

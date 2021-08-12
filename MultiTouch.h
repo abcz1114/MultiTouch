@@ -25,12 +25,13 @@ public:
         float y;
         float size;
         float pressure;
-        bool moved;
         TouchState state;
+        bool moved;
         TouchData();
         TouchData(long identity, float x, float y, TouchState state);
         TouchData(long identity, float x, float y, float size, TouchState state);
         TouchData(long identity, float x, float y, float size, float pressure, TouchState state);
+        TouchData(long identity, float x, float y, float size, float pressure, TouchState state, bool moved);
     };
     
 private:
