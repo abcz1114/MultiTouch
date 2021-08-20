@@ -80,7 +80,7 @@ public:
     void cancelTouch(long identity, float x, float y, float size);
     void cancelTouch(long identity, float x, float y, float size, float pressure);
 
-    std::string stateToString(const MultiTouch::TouchState & state) const;
+    static std::string stateToString(const MultiTouch::TouchState & state);
     
     std::string toString() const;
 };

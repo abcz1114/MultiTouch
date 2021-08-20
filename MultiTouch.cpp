@@ -205,7 +205,7 @@ void MultiTouch::cancelTouch(long identity, float x, float y) {
     cancelTouch(identity, x, y, 0, 0);
 }
 
-std::string MultiTouch::stateToString(const MultiTouch::TouchState & state) const {
+std::string MultiTouch::stateToString(const MultiTouch::TouchState & state) {
     switch(state) {
         case NONE : return "NONE";
         case TOUCH_DOWN : return "TOUCH_DOWN";
