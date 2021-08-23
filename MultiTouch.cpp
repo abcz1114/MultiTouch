@@ -58,11 +58,9 @@ long MultiTouch::getTouchIndex() {
 
 MultiTouch::Iterator::Iterator(MultiTouch * multiTouch) {
     this->multiTouch = multiTouch;
-    multiTouchIsEmpty = multiTouch == nullptr || multiTouch->touchCount == 0;
 }
 
 bool MultiTouch::Iterator::hasNext() {
-    if (multiTouchIsEmpty) return false;
     for (long i = index; i < multiTouch->maxSupportedTouches; i++) {
         TouchContainer & tc = multiTouch->data[i];
         // a container can be marked as unused but have a touch state != NONE
@@ -76,7 +74,7 @@ bool MultiTouch::Iterator::hasNext() {
 }
 
 MultiTouch::TouchData * MultiTouch::Iterator::next() {
-    return multiTouchIsEmpty ? nullptr : &multiTouch->data[index++].touch;
+    return &multiTouch->data[index++].touch;
 }
 
 long MultiTouch::Iterator::getIndex() const {

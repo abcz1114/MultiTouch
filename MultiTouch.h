@@ -61,7 +61,6 @@ public:
     
     class Iterator {
         MultiTouch * multiTouch;
-        bool multiTouchIsEmpty;
         long index = 0;
     public:
         Iterator(MultiTouch * multiTouch);
