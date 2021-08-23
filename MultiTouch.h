@@ -7,6 +7,7 @@
 
 #include "Utils/Array.h"
 #include <string>
+#include <inttypes.h> // uint64_t
 
 class MultiTouch {
 public:
@@ -21,6 +22,7 @@ public:
     class TouchData {
     public:
         long identity;
+        uint64_t timestamp;
         float x;
         float y;
         float size;
@@ -28,10 +30,10 @@ public:
         TouchState state;
         bool moved;
         TouchData();
-        TouchData(long identity, float x, float y, TouchState state);
-        TouchData(long identity, float x, float y, float size, TouchState state);
-        TouchData(long identity, float x, float y, float size, float pressure, TouchState state);
-        TouchData(long identity, float x, float y, float size, float pressure, TouchState state, bool moved);
+        TouchData(long identity, uint64_t timestamp, float x, float y, TouchState state);
+        TouchData(long identity, uint64_t timestamp, float x, float y, float size, TouchState state);
+        TouchData(long identity, uint64_t timestamp, float x, float y, float size, float pressure, TouchState state);
+        TouchData(long identity, uint64_t timestamp, float x, float y, float size, float pressure, TouchState state, bool moved);
     };
     
 private:
@@ -56,26 +58,42 @@ public:
     TouchData & getTouchAt(long index);
     long getTouchCount();
     long getTouchIndex();
+    
+    class Iterator {
+        MultiTouch * multiTouch;
+        bool multiTouchIsEmpty;
+        long index = 0;
+    public:
+        Iterator(MultiTouch * multiTouch);
+        bool hasNext();
+        TouchData * next();
+        long getIndex() const;
+    };
 
-    void setMaxSupportedTouches(long supportedTouches) {
-        maxSupportedTouches = supportedTouches;
-        data.resize(maxSupportedTouches);
-    }
+    Iterator getIterator();
+
+    void setMaxSupportedTouches(long supportedTouches);
+    
+    long getMaxSupportedTouches();
     
     void tryPurgeTouch(MultiTouch::TouchContainer & touchContainer);
 
+    void addTouch(const TouchData & data);
     void addTouch(long identity, float x, float y);
     void addTouch(long identity, float x, float y, float size);
     void addTouch(long identity, float x, float y, float size, float pressure);
 
+    void moveTouch(const TouchData & data);
     void moveTouch(long identity, float x, float y);
     void moveTouch(long identity, float x, float y, float size);
     void moveTouch(long identity, float x, float y, float size, float pressure);
 
+    void removeTouch(const TouchData & data);
     void removeTouch(long identity, float x, float y);
     void removeTouch(long identity, float x, float y, float size);
     void removeTouch(long identity, float x, float y, float size, float pressure);
 
+    void cancelTouch(const TouchData & data);
     void cancelTouch(long identity, float x, float y);
     void cancelTouch(long identity, float x, float y, float size);
     void cancelTouch(long identity, float x, float y, float size, float pressure);

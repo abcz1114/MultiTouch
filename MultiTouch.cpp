@@ -5,27 +5,28 @@
 #include "MultiTouch.h"
 
 MultiTouch::TouchData::TouchData() :
-    MultiTouch::TouchData(0, 0, 0, 0, 0, MultiTouch::NONE)
+    MultiTouch::TouchData(0, 0, 0, 0, 0, 0, MultiTouch::NONE)
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, float x, float y, MultiTouch::TouchState state) :
-MultiTouch::TouchData(identity, x, y, 0, 0, MultiTouch::NONE)
+MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp, float x, float y, MultiTouch::TouchState state) :
+MultiTouch::TouchData(identity, timestamp, x, y, 0, 0, MultiTouch::NONE)
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, float x, float y, float size, MultiTouch::TouchState state) :
-MultiTouch::TouchData(identity, x, y, size, 0, MultiTouch::NONE)
+MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp, float x, float y, float size, MultiTouch::TouchState state) :
+MultiTouch::TouchData(identity, timestamp, x, y, size, 0, MultiTouch::NONE)
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, float x, float y, float size, float pressure, MultiTouch::TouchState state):
-MultiTouch::TouchData(identity, x, y, size, pressure, state, false)
+MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp, float x, float y, float size, float pressure, MultiTouch::TouchState state):
+MultiTouch::TouchData(identity, timestamp, x, y, size, pressure, state, false)
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, float x, float y, float size, float pressure, MultiTouch::TouchState state, bool moved) {
+MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp, float x, float y, float size, float pressure, MultiTouch::TouchState state, bool moved) {
     this->identity = identity;
+    this->timestamp = timestamp;
     this->x = x;
     this->y = y;
     this->size = size;
@@ -55,6 +56,46 @@ long MultiTouch::getTouchIndex() {
     return index;
 }
 
+MultiTouch::Iterator::Iterator(MultiTouch * multiTouch) {
+    this->multiTouch = multiTouch;
+    multiTouchIsEmpty = multiTouch == nullptr || multiTouch->touchCount == 0;
+}
+
+bool MultiTouch::Iterator::hasNext() {
+    if (multiTouchIsEmpty) return false;
+    for (long i = index; i < multiTouch->maxSupportedTouches; i++) {
+        TouchContainer & tc = multiTouch->data[i];
+        // a container can be marked as unused but have a touch state != NONE
+        // in this case, it is either freshly removed, or freshly cancelled
+        if (tc.touch.state != NONE) {
+            index = i;
+            return true;
+        }
+    }
+    return false;
+}
+
+MultiTouch::TouchData * MultiTouch::Iterator::next() {
+    return multiTouchIsEmpty ? nullptr : &multiTouch->data[index++].touch;
+}
+
+long MultiTouch::Iterator::getIndex() const {
+    return index-1;
+}
+
+MultiTouch::Iterator MultiTouch::getIterator() {
+    return Iterator(this);
+}
+
+void MultiTouch::setMaxSupportedTouches(long supportedTouches) {
+    maxSupportedTouches = supportedTouches;
+    data.resize(maxSupportedTouches);
+}
+
+long MultiTouch::getMaxSupportedTouches() {
+    return maxSupportedTouches;
+}
+
 void MultiTouch::tryPurgeTouch(MultiTouch::TouchContainer & touchContainer) {
     if (!touchContainer.used && touchContainer.touch.state != NONE) {
         touchContainer.touch.moved = false;
@@ -63,8 +104,8 @@ void MultiTouch::tryPurgeTouch(MultiTouch::TouchContainer & touchContainer) {
     }
 }
 
-void MultiTouch::addTouch(long identity, float x, float y, float size, float pressure) {
-    if (debug) Log::Debug("adding touch with identity: ", identity);
+void MultiTouch::addTouch(const MultiTouch::TouchData & touchData) {
+    if (debug) Log::Debug("adding touch with identity: ", touchData.identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
@@ -72,15 +113,12 @@ void MultiTouch::addTouch(long identity, float x, float y, float size, float pre
         if (!found && !touchContainer.used) {
             found = true;
             touchContainer.used = true;
-            touchContainer.touch.identity = identity;
-            touchContainer.touch.x = x;
-            touchContainer.touch.y = y;
-            touchContainer.touch.size = size;
-            touchContainer.touch.pressure = pressure;
-            touchContainer.touch.moved = false;
-            touchContainer.touch.state = TOUCH_DOWN;
+            touchContainer.touch = touchData;
             touchCount++;
             index = i;
+        }
+        if (touchContainer.used && touchContainer.touch.state == NONE) {
+            Log::Error_And_Throw("touch cannot be active with a state of NONE");
         }
     }
     if (!found) {
@@ -93,6 +131,10 @@ void MultiTouch::addTouch(long identity, float x, float y, float size, float pre
     }
 }
 
+void MultiTouch::addTouch(long identity, float x, float y, float size, float pressure) {
+    addTouch({identity, static_cast<uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count()), x, y, size, pressure, TOUCH_DOWN, false});
+}
+
 void MultiTouch::addTouch(long identity, float x, float y, float size) {
     addTouch(identity, x, y, size, 0);
 }
@@ -101,23 +143,23 @@ void MultiTouch::addTouch(long identity, float x, float y) {
     addTouch(identity, x, y, 0, 0);
 }
 
-void MultiTouch::moveTouch(long identity, float x, float y, float size, float pressure) {
-    if (debug) Log::Debug("moving touch with identity: ", identity);
+void MultiTouch::moveTouch(const MultiTouch::TouchData & touchData) {
+    if (debug) Log::Debug("moving touch with identity: ", touchData.identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
         tryPurgeTouch(touchContainer);
         if (!found && touchContainer.used) {
-            if (touchContainer.touch.identity == identity) {
+            if (touchContainer.touch.identity == touchData.identity) {
                 found = true;
-                touchContainer.touch.moved = touchContainer.touch.x != x || touchContainer.touch.y != y;
-                touchContainer.touch.x = x;
-                touchContainer.touch.y = y;
-                touchContainer.touch.size = size;
-                touchContainer.touch.pressure = pressure;
-                touchContainer.touch.state = TOUCH_MOVE;
+                bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+                touchContainer.touch = touchData;
+                touchContainer.touch.moved = moved;
                 index = i;
             }
+        }
+        if (touchContainer.used && touchContainer.touch.state == NONE) {
+            Log::Error_And_Throw("touch cannot be active with a state of NONE");
         }
     }
     if (!found) {
@@ -125,6 +167,10 @@ void MultiTouch::moveTouch(long identity, float x, float y, float size, float pr
                 "cannot move a touch that has not been registered"
         );
     }
+}
+
+void MultiTouch::moveTouch(long identity, float x, float y, float size, float pressure) {
+    moveTouch({identity, static_cast<uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count()), x, y, size, pressure, TOUCH_MOVE});
 }
 
 void MultiTouch::moveTouch(long identity, float x, float y, float size) {
@@ -135,24 +181,24 @@ void MultiTouch::moveTouch(long identity, float x, float y) {
     moveTouch(identity, x, y, 0, 0);
 }
 
-void MultiTouch::removeTouch(long identity, float x, float y, float size, float pressure) {
-    if (debug) Log::Debug("removing touch with identity: ", identity);
+void MultiTouch::removeTouch(const MultiTouch::TouchData & touchData) {
+    if (debug) Log::Debug("removing touch with identity: ", touchData.identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
         tryPurgeTouch(touchContainer);
         if (!found && touchContainer.used) {
-            if (touchContainer.touch.identity == identity) {
+            if (touchContainer.touch.identity == touchData.identity) {
                 found = true;
-                touchContainer.touch.moved = touchContainer.touch.x != x || touchContainer.touch.y != y;
-                touchContainer.touch.x = x;
-                touchContainer.touch.y = y;
-                touchContainer.touch.size = size;
-                touchContainer.touch.pressure = pressure;
-                touchContainer.touch.state = TOUCH_UP;
+                bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+                touchContainer.touch = touchData;
+                touchContainer.touch.moved = moved;
                 touchContainer.used = false;
                 index = i;
             }
+        }
+        if (touchContainer.used && touchContainer.touch.state == NONE) {
+            Log::Error_And_Throw("touch cannot be active with a state of NONE");
         }
     }
     if (!found) {
@@ -160,6 +206,10 @@ void MultiTouch::removeTouch(long identity, float x, float y, float size, float 
                 "cannot remove a touch that has not been registered"
         );
     }
+}
+
+void MultiTouch::removeTouch(long identity, float x, float y, float size, float pressure) {
+    removeTouch({identity, static_cast<uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count()), x, y, size, pressure, TOUCH_UP});
 }
 
 void MultiTouch::removeTouch(long identity, float x, float y, float size) {
@@ -170,31 +220,39 @@ void MultiTouch::removeTouch(long identity, float x, float y) {
     removeTouch(identity, x, y, 0, 0);
 }
 
-void MultiTouch::cancelTouch(long identity, float x, float y, float size, float pressure) {
-    if (debug) Log::Debug("cancelling touch with identity: ", identity);
+void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
+    if (debug) Log::Debug("cancelling touch with identity: ", touchData.identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
-        tryPurgeTouch(touchContainer);
-        if (!found && touchContainer.used) {
-            if (touchContainer.touch.identity == identity) {
+        if (touchContainer.used && touchContainer.touch.state == NONE) {
+            Log::Error_And_Throw("touch cannot be active with a state of NONE");
+        }
+        if (touchContainer.used) {
+            if (!found && touchContainer.touch.identity == touchData.identity) {
                 found = true;
-                touchContainer.touch.moved = touchContainer.touch.x != x || touchContainer.touch.y != y;
-                touchContainer.touch.x = x;
-                touchContainer.touch.y = y;
-                touchContainer.touch.size = size;
-                touchContainer.touch.pressure = pressure;
-                touchContainer.touch.state = TOUCH_CANCELLED;
+                bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+                touchContainer.touch = touchData;
+                touchContainer.touch.moved = moved;
                 touchContainer.used = false;
                 index = i;
+            } else {
+                touchContainer.touch.state = NONE;
+                touchContainer.used = false;
             }
         }
     }
+
     if (!found) {
         Log::Error_And_Throw(
-                "cannot remove a touch that has not been registered"
+                "cannot cancel a touch that has not been registered"
         );
     }
+    touchCount = 0;
+}
+
+void MultiTouch::cancelTouch(long identity, float x, float y, float size, float pressure) {
+    cancelTouch({identity, static_cast<uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count()), x, y, size, pressure, TOUCH_CANCELLED});
 }
 
 void MultiTouch::cancelTouch(long identity, float x, float y, float size) {
