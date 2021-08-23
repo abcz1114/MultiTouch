@@ -110,8 +110,9 @@ void MultiTouch::addTouch(const MultiTouch::TouchData & touchData) {
         tryPurgeTouch(touchContainer);
         if (!found && !touchContainer.used) {
             found = true;
-            touchContainer.used = true;
             touchContainer.touch = touchData;
+            touchContainer.touch.state = TOUCH_DOWN;
+            touchContainer.used = true;
             touchCount++;
             index = i;
         }
@@ -153,6 +154,7 @@ void MultiTouch::moveTouch(const MultiTouch::TouchData & touchData) {
                 bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
                 touchContainer.touch = touchData;
                 touchContainer.touch.moved = moved;
+                touchContainer.touch.state = TOUCH_MOVE;
                 index = i;
             }
         }
@@ -191,6 +193,7 @@ void MultiTouch::removeTouch(const MultiTouch::TouchData & touchData) {
                 bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
                 touchContainer.touch = touchData;
                 touchContainer.touch.moved = moved;
+                touchContainer.touch.state = TOUCH_UP;
                 touchContainer.used = false;
                 index = i;
             }
@@ -232,6 +235,7 @@ void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
                 bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
                 touchContainer.touch = touchData;
                 touchContainer.touch.moved = moved;
+                touchContainer.touch.state = TOUCH_CANCELLED;
                 touchContainer.used = false;
                 index = i;
             } else {
