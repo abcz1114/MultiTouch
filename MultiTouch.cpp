@@ -229,8 +229,10 @@ void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
         if (touchContainer.used && touchContainer.touch.state == NONE) {
             Log::Error_And_Throw("touch cannot be active with a state of NONE");
         }
+        // ignore touch identity since we are cancelling a touch
+        // the identity may not match at all
         if (touchContainer.used) {
-            if (!found && touchContainer.touch.identity == touchData.identity) {
+            if (!found) {
                 found = true;
                 bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
                 touchContainer.touch = touchData;
@@ -244,11 +246,16 @@ void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
             }
         }
     }
-
+    
     if (!found) {
-        Log::Error_And_Throw(
-                "cannot cancel a touch that has not been registered"
-        );
+        // if not found, cancel the first touch
+        TouchContainer & touchContainer = data[0];
+        bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+        touchContainer.touch = touchData;
+        touchContainer.touch.moved = moved;
+        touchContainer.touch.state = TOUCH_CANCELLED;
+        touchContainer.used = false;
+        index = 0;
     }
     touchCount = 0;
 }
