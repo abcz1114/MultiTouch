@@ -54,6 +54,7 @@ private:
 public:
 
     bool debug = false;
+    bool throw_on_error = false;
     
     TouchData & getTouchAt(long index);
     long getTouchCount();
@@ -92,6 +93,7 @@ public:
     void removeTouch(long identity, float x, float y, float size);
     void removeTouch(long identity, float x, float y, float size, float pressure);
 
+    void cancelTouch();
     void cancelTouch(const TouchData & data);
     void cancelTouch(long identity, float x, float y);
     void cancelTouch(long identity, float x, float y, float size);

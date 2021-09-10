@@ -119,16 +119,31 @@ void MultiTouch::addTouch(const MultiTouch::TouchData & touchData) {
             index = i;
         }
         if (touchContainer.used && touchContainer.touch.state == NONE) {
-            Log::Error_And_Throw("touch cannot be active with a state of NONE");
+            if (throw_on_error) {
+                Log::Error_And_Throw("touch cannot be active with a state of NONE");
+            } else {
+                Log::Error("touch cannot be active with a state of NONE, cancelling touch");
+                cancelTouch();
+            }
         }
     }
     if (!found) {
-        Log::Error_And_Throw(
-                "the maximum number of supported touches of ",
-                maxSupportedTouches,
-                " has been reached.\n",
-                "please call setMaxSupportedTouches(long)"
-        );
+        if (throw_on_error) {
+            Log::Error_And_Throw(
+                    "the maximum number of supported touches of ",
+                    maxSupportedTouches,
+                    " has been reached.\n",
+                    "please call setMaxSupportedTouches(long)"
+            );
+        } else {
+            Log::Error(
+                    "the maximum number of supported touches of ",
+                    maxSupportedTouches,
+                    " has been reached.\n",
+                    "please call setMaxSupportedTouches(long), cancelling touch"
+            );
+            cancelTouch();
+        }
     }
 }
 
@@ -161,13 +176,21 @@ void MultiTouch::moveTouch(const MultiTouch::TouchData & touchData) {
             }
         }
         if (touchContainer.used && touchContainer.touch.state == NONE) {
-            Log::Error_And_Throw("touch cannot be active with a state of NONE");
+            if (throw_on_error) {
+                Log::Error_And_Throw("touch cannot be active with a state of NONE");
+            } else {
+                Log::Error("touch cannot be active with a state of NONE, cancelling touch");
+                cancelTouch();
+            }
         }
     }
     if (!found) {
-        Log::Error_And_Throw(
-                "cannot move a touch that has not been registered"
-        );
+        if (throw_on_error) {
+            Log::Error_And_Throw("cannot move a touch that has not been registered");
+        } else {
+            Log::Error("cannot move a touch that has not been registered, cancelling touch");
+            cancelTouch();
+        }
     }
 }
 
@@ -201,13 +224,21 @@ void MultiTouch::removeTouch(const MultiTouch::TouchData & touchData) {
             }
         }
         if (touchContainer.used && touchContainer.touch.state == NONE) {
-            Log::Error_And_Throw("touch cannot be active with a state of NONE");
+            if (throw_on_error) {
+                Log::Error_And_Throw("touch cannot be active with a state of NONE");
+            } else {
+                Log::Error("touch cannot be active with a state of NONE, cancelling touch");
+                cancelTouch();
+            }
         }
     }
     if (!found) {
-        Log::Error_And_Throw(
-                "cannot remove a touch that has not been registered"
-        );
+        if (throw_on_error) {
+            Log::Error_And_Throw("cannot remove a touch that has not been registered");
+        } else {
+            Log::Error("cannot remove a touch that has not been registered, cancelling touch");
+            cancelTouch();
+        }
     }
 }
 
@@ -224,12 +255,17 @@ void MultiTouch::removeTouch(long identity, float x, float y) {
 }
 
 void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
-    if (debug) Log::Debug("cancelling touch with identity: ", touchData.identity);
+    if (debug) Log::Debug("cancelling touch");
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
         if (touchContainer.used && touchContainer.touch.state == NONE) {
-            Log::Error_And_Throw("touch cannot be active with a state of NONE");
+            if (throw_on_error) {
+                Log::Error_And_Throw("touch cannot be active with a state of NONE");
+            } else {
+                Log::Error("touch cannot be active with a state of NONE, cancelling touch");
+                cancelTouch();
+            }
         }
         // ignore touch identity since we are cancelling a touch
         // the identity may not match at all
@@ -251,12 +287,16 @@ void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
     
     if (!found) {
         // if not found, cancel the first touch
-        TouchContainer & touchContainer = data[0];
-        bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
-        touchContainer.touch = touchData;
-        touchContainer.touch.moved = moved;
-        touchContainer.touch.state = TOUCH_CANCELLED;
-        touchContainer.used = false;
+        if (maxSupportedTouches <= 0) {
+            Log::Error("the maximum number of supported touches must be greater than zero");
+        } else {
+            TouchContainer & touchContainer = data[0];
+            bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+            touchContainer.touch = touchData;
+            touchContainer.touch.moved = moved;
+            touchContainer.touch.state = TOUCH_CANCELLED;
+            touchContainer.used = false;
+        }
         index = 0;
     }
     touchCount = 0;
@@ -272,6 +312,19 @@ void MultiTouch::cancelTouch(long identity, float x, float y, float size) {
 
 void MultiTouch::cancelTouch(long identity, float x, float y) {
     cancelTouch(identity, x, y, 0, 0);
+}
+
+void MultiTouch::cancelTouch() {
+    // cancel the first touch
+    if (maxSupportedTouches <= 0) {
+        Log::Error("the maximum number of supported touches must be greater than zero");
+    } else {
+        TouchContainer & touchContainer = data[0];
+        touchContainer.touch.moved = false;
+        touchContainer.touch.state = TOUCH_CANCELLED;
+        touchContainer.used = false;
+    }
+    index = 0;
 }
 
 std::string MultiTouch::stateToString(const MultiTouch::TouchState & state) {
