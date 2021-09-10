@@ -10,68 +10,88 @@
 template<typename T>
 class AutoResizingArray {
     Array<T> array;
+    size_t minCapacity = 0;
     size_t pageSize = 2;
-    size_t index = 0;
+    size_t elementCount = 0;
 public:
 
     AutoResizingArray() = default;
 
+    AutoResizingArray(size_t pageSize, size_t minCapacity) {
+        this->pageSize = pageSize;
+        setMinCapacity(minCapacity);
+    };
+
     AutoResizingArray(size_t pageSize) {
         this->pageSize = pageSize;
     };
-    
-    AutoResizingArray(const AutoResizingArray<T> &other) : array(other.array), pageSize(other.pageSize), index(other.index) {}
+
+    AutoResizingArray(const AutoResizingArray<T> &other) : array(other.array), minCapacity(other.minCapacity), pageSize(other.pageSize), elementCount(other.elementCount) {}
 
     template<typename U>
-    AutoResizingArray(const AutoResizingArray<U> &other) : array(other.array), pageSize(other.pageSize), index(other.index) {}
+    AutoResizingArray(const AutoResizingArray<U> &other) : array(other.array), minCapacity(other.minCapacity), pageSize(other.pageSize), elementCount(other.elementCount) {}
 
     AutoResizingArray<T> &operator=(const AutoResizingArray<T> &other) {
         array = other.array;
+        minCapacity = other.minCapacity;
         pageSize = other.pageSize;
-        index = other.index;
+        elementCount = other.elementCount;
         return *this;
     }
 
     template<typename U>
     AutoResizingArray<T> &operator=(const AutoResizingArray<U> &other) {
         array = other.array;
+        minCapacity = other.minCapacity;
         pageSize = other.pageSize;
-        index = other.index;
+        elementCount = other.elementCount;
         return *this;
     }
 
     AutoResizingArray(AutoResizingArray<T> &&other) : array(std::move(other.array)) {
+        std::swap(minCapacity, other.minCapacity);
         std::swap(pageSize, other.pageSize);
-        std::swap(index, other.index);
+        std::swap(elementCount, other.elementCount);
     }
 
     template<typename U>
     AutoResizingArray(AutoResizingArray<U> &&other) : array(std::move(other.array)) {
+        std::swap(minCapacity, other.minCapacity);
         std::swap(pageSize, other.pageSize);
-        std::swap(index, other.index);
+        std::swap(elementCount, other.elementCount);
     }
 
     AutoResizingArray<T> &operator=(AutoResizingArray<T> &&other) {
         array = std::move(other.array);
+        std::swap(minCapacity, other.minCapacity);
         std::swap(pageSize, other.pageSize);
-        std::swap(index, other.index);
+        std::swap(elementCount, other.elementCount);
         return *this;
     }
 
     template<typename U>
     AutoResizingArray<T> &operator=(AutoResizingArray<U> &&other) {
         array = std::move(other.array);
+        std::swap(minCapacity, other.minCapacity);
         std::swap(pageSize, other.pageSize);
-        std::swap(index, other.index);
+        std::swap(elementCount, other.elementCount);
         return *this;
     }
 
     bool isEmpty() const {
-        return index == 0;
+        return elementCount == 0;
     }
 
     size_t getCapacity() const {
         return array.getCapacity();
+    }
+    
+    void setMinCapacity(const size_t & capacity) {
+        if (minCapacity != capacity) {
+            minCapacity = capacity;
+            if (array.getCapacity() < minCapacity) array.resize(minCapacity);
+            if (elementCount > minCapacity) elementCount = minCapacity;
+        }
     }
 
     void setPageSize(size_t newPageSize) {
@@ -99,74 +119,80 @@ public:
     }
 
     template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
-    T & operator[] (int index_) {
-        return array[index_];
+    T & operator[] (size_t index) {
+        return array[index];
     }
 
     template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
-    const T & operator[] (int index_) const {
-        return array[index_];
+    const T & operator[] (size_t index) const {
+        return array[index];
     }
 
     template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
-    T operator[] (int index_) {
-        return array[index_];
+    T operator[] (size_t index) {
+        return array[index];
     }
 
     template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
-    const T operator[] (int index_) const {
-        return array[index_];
+    const T operator[] (size_t index) const {
+        return array[index];
     }
 
     template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
-    void add(const T & data) {
+    T & add(const T & data) {
         size_t capacity = array.getCapacity();
-        if (capacity == index) array.resize(capacity + pageSize);
-        array[index++] = data;
+        if (capacity == elementCount && capacity >= minCapacity) {
+            array.resize(capacity + pageSize);
+        }
+        array[elementCount] = data;
+        return array[elementCount++];
     }
 
     template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
-    void add(T data) {
+    T add(T data) {
         size_t capacity = array.getCapacity();
-        if (capacity == index) array.resize(capacity + pageSize);
-        array[index++] = data;
+        if (capacity == elementCount && capacity >= minCapacity) {
+            array.resize(capacity + pageSize);
+        }
+        array[elementCount] = data;
+        return array[elementCount++];
     }
 
     template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
     T & peek() {
-        return array[index-1];
+        return array[elementCount-1];
     }
 
     template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
     const T & peek() const {
-        return array[index-1];
+        return array[elementCount-1];
     }
 
     template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
     T peek() {
-        return array[index-1];
+        return array[elementCount-1];
     }
 
     template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
     const T peek() const {
-        return array[index-1];
+        return array[elementCount-1];
     }
-
+    
     template<class T_REFERENCE = void, typename = typename std::enable_if<!std::is_pointer<T>::value, T_REFERENCE>::type>
     T && remove() {
         T && val = std::move(peek());
+        elementCount--;
         size_t capacity = array.getCapacity() - pageSize;
-        if (capacity == index) array.resize(capacity);
-        index--;
+        if (capacity == elementCount && capacity >= minCapacity) array.resize(capacity);
         return std::move(val);
     }
 
     template<class T_POINTER = void, typename = typename std::enable_if<std::is_pointer<T>::value, T_POINTER>::type>
     T remove() {
         T val = peek();
+        elementCount--;
         size_t capacity = array.getCapacity() - pageSize;
-        if (capacity == index) array.resize(capacity);
-        index--;
+        if (capacity == elementCount && capacity >= minCapacity) array.resize(capacity);
         return val;
     }
 
@@ -179,7 +205,7 @@ public:
     }
     
     size_t size() const {
-        return index;
+        return elementCount;
     }
 
     T* begin() {
@@ -196,6 +222,12 @@ public:
 
     const T* end() const {
         return begin() + size();
+    }
+
+    void clear() {
+        array.resize(0);
+        array.resize(minCapacity);
+        elementCount = 0;
     }
 };
 
