@@ -3,16 +3,6 @@ a cross platform MultiTouch library that aims to provide a unified MultiTouch AP
 
 ## now includes DiligentLog for stand-alone compilation
 
-## important
-if you are linking to DiligentCore, please use https://github.com/mgood7123/DiligentCore
-
-followed by
-```CMake
-add_subdirectory(MultiTouch)
-include_directories(MultiTouch/DiligentLog/Primitives/interface)
-add_subdirectory(DiligentEngine/DiligentCore)
-```
-
 # USAGE
 
 ### Mac OS
