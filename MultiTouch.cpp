@@ -9,24 +9,24 @@ MultiTouch::TouchData::TouchData() :
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp, float x, float y, MultiTouch::TouchState state) :
-MultiTouch::TouchData(identity, timestamp, x, y, 0, 0, MultiTouch::NONE)
+MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, MultiTouch::TouchState state) :
+MultiTouch::TouchData(identity, timestamp_nanoseconds, x, y, 0, 0, MultiTouch::NONE)
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp, float x, float y, float size, MultiTouch::TouchState state) :
-MultiTouch::TouchData(identity, timestamp, x, y, size, 0, MultiTouch::NONE)
+MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, float size, MultiTouch::TouchState state) :
+MultiTouch::TouchData(identity, timestamp_nanoseconds, x, y, size, 0, MultiTouch::NONE)
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp, float x, float y, float size, float pressure, MultiTouch::TouchState state):
-MultiTouch::TouchData(identity, timestamp, x, y, size, pressure, state, false)
+MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, float size, float pressure, MultiTouch::TouchState state):
+MultiTouch::TouchData(identity, timestamp_nanoseconds, x, y, size, pressure, state, false)
 {
 }
 
-MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp, float x, float y, float size, float pressure, MultiTouch::TouchState state, bool moved) {
+MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, float size, float pressure, MultiTouch::TouchState state, bool moved) {
     this->identity = identity;
-    this->timestamp = timestamp;
+    this->timestamp_nanoseconds = timestamp_nanoseconds;
     this->x = x;
     this->y = y;
     this->size = size;
@@ -160,7 +160,7 @@ void MultiTouch::addTouch(long identity, float x, float y) {
 }
 
 void MultiTouch::moveTouch(const MultiTouch::TouchData & touchData) {
-    if (debug) Log::Debug("moving touch with identity: ", touchData.identity);
+    if (debug && printMoved) Log::Debug("moving touch with identity: ", touchData.identity);
     bool found = false;
     for (long i = 0; i < maxSupportedTouches; i++) {
         TouchContainer & touchContainer = data[i];
@@ -348,6 +348,7 @@ std::string MultiTouch::toString() const {
             if (touchIndex == index) s += " [CURRENT]";
             s += ", action : " + stateToString(touch.state);
             s += ", identity : " + std::to_string(touch.identity);
+            s += ", timestamp (nanoseconds) : " + std::to_string(touch.timestamp_nanoseconds);
             s += ", did touch move : "; s += touch.moved ? "True" : "False";
             s += ", x : " + std::to_string(touch.x);
             s += ", y : " + std::to_string(touch.y);
