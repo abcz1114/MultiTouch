@@ -22,7 +22,7 @@ public:
     class TouchData {
     public:
         long identity;
-        uint64_t timestamp;
+        uint64_t timestamp_nanoseconds;
         float x;
         float y;
         float size;
@@ -30,10 +30,10 @@ public:
         TouchState state;
         bool moved;
         TouchData();
-        TouchData(long identity, uint64_t timestamp, float x, float y, TouchState state);
-        TouchData(long identity, uint64_t timestamp, float x, float y, float size, TouchState state);
-        TouchData(long identity, uint64_t timestamp, float x, float y, float size, float pressure, TouchState state);
-        TouchData(long identity, uint64_t timestamp, float x, float y, float size, float pressure, TouchState state, bool moved);
+        TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, TouchState state);
+        TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, float size, TouchState state);
+        TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, float size, float pressure, TouchState state);
+        TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, float size, float pressure, TouchState state, bool moved);
     };
     
 private:
@@ -54,6 +54,7 @@ private:
 public:
 
     bool debug = false;
+    bool printMoved = true;
     bool throw_on_error = false;
     
     TouchData & getTouchAt(long index);
