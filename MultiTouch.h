@@ -23,6 +23,10 @@ public:
     public:
         long identity;
         uint64_t timestamp_nanoseconds;
+        uint64_t timestamp_nanoseconds_TOUCH_DOWN;
+        uint64_t timestamp_nanoseconds_TOUCH_MOVE;
+        uint64_t timestamp_nanoseconds_TOUCH_UP;
+        uint64_t timestamp_nanoseconds_TOUCH_CANCELLED;
         float x;
         float y;
         float size;
