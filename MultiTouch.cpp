@@ -33,6 +33,26 @@ MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp_nanoseconds, 
     this->pressure = pressure;
     this->state = state;
     this->moved = moved;
+    switch(state) {
+        case TOUCH_DOWN: {
+            this->timestamp_nanoseconds_TOUCH_DOWN = this->timestamp_nanoseconds;
+            break;
+        }
+        case TOUCH_MOVE: {
+            this->timestamp_nanoseconds_TOUCH_MOVE = this->timestamp_nanoseconds;
+            break;
+        }
+        case TOUCH_UP: {
+            this->timestamp_nanoseconds_TOUCH_UP = this->timestamp_nanoseconds;
+            break;
+        }
+        case TOUCH_CANCELLED: {
+            this->timestamp_nanoseconds_TOUCH_CANCELLED = this->timestamp_nanoseconds;
+            break;
+        }
+        case NONE:
+            break;
+    }
 }
 
 MultiTouch::TouchContainer::TouchContainer() {
