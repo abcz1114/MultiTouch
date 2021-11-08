@@ -27,6 +27,10 @@ MultiTouch::TouchData(identity, timestamp_nanoseconds, x, y, size, pressure, sta
 MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp_nanoseconds, float x, float y, float size, float pressure, MultiTouch::TouchState state, bool moved) {
     this->identity = identity;
     this->timestamp_nanoseconds = timestamp_nanoseconds;
+    this->timestamp_nanoseconds_TOUCH_UP = 0;
+    this->timestamp_nanoseconds_TOUCH_MOVE = 0;
+    this->timestamp_nanoseconds_TOUCH_DOWN = 0;
+    this->timestamp_nanoseconds_TOUCH_CANCELLED = 0;
     this->x = x;
     this->y = y;
     this->size = size;
@@ -112,7 +116,17 @@ void MultiTouch::addTouch(const MultiTouch::TouchData & touchData) {
         tryPurgeTouch(touchContainer);
         if (!found && !touchContainer.used) {
             found = true;
+            auto t = touchContainer.touch.timestamp_nanoseconds;
+            auto tu = touchContainer.touch.timestamp_nanoseconds_TOUCH_UP;
+            auto tm = touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE;
+            auto td = touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN;
+            auto tc = touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED;
             touchContainer.touch = touchData;
+            touchContainer.touch.timestamp_nanoseconds = t;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_UP = tu;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE = tm;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN = td;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = tc;
             touchContainer.touch.state = TOUCH_DOWN;
             touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN = touchData.timestamp_nanoseconds;
             touchContainer.used = true;
@@ -170,7 +184,17 @@ void MultiTouch::moveTouch(const MultiTouch::TouchData & touchData) {
             if (touchContainer.touch.identity == touchData.identity) {
                 found = true;
                 bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+                auto t = touchContainer.touch.timestamp_nanoseconds;
+                auto tu = touchContainer.touch.timestamp_nanoseconds_TOUCH_UP;
+                auto tm = touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE;
+                auto td = touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN;
+                auto tc = touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED;
                 touchContainer.touch = touchData;
+                touchContainer.touch.timestamp_nanoseconds = t;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_UP = tu;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE = tm;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN = td;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = tc;
                 touchContainer.touch.moved = moved;
                 touchContainer.touch.state = TOUCH_MOVE;
                 touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE = touchData.timestamp_nanoseconds;
@@ -218,7 +242,17 @@ void MultiTouch::removeTouch(const MultiTouch::TouchData & touchData) {
             if (touchContainer.touch.identity == touchData.identity) {
                 found = true;
                 bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+                auto t = touchContainer.touch.timestamp_nanoseconds;
+                auto tu = touchContainer.touch.timestamp_nanoseconds_TOUCH_UP;
+                auto tm = touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE;
+                auto td = touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN;
+                auto tc = touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED;
                 touchContainer.touch = touchData;
+                touchContainer.touch.timestamp_nanoseconds = t;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_UP = tu;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE = tm;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN = td;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = tc;
                 touchContainer.touch.moved = moved;
                 touchContainer.touch.state = TOUCH_UP;
                 touchContainer.touch.timestamp_nanoseconds_TOUCH_UP = touchData.timestamp_nanoseconds;
@@ -276,7 +310,17 @@ void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
             if (!found) {
                 found = true;
                 bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+                auto t = touchContainer.touch.timestamp_nanoseconds;
+                auto tu = touchContainer.touch.timestamp_nanoseconds_TOUCH_UP;
+                auto tm = touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE;
+                auto td = touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN;
+                auto tc = touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED;
                 touchContainer.touch = touchData;
+                touchContainer.touch.timestamp_nanoseconds = t;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_UP = tu;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE = tm;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN = td;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = tc;
                 touchContainer.touch.moved = moved;
                 touchContainer.touch.state = TOUCH_CANCELLED;
                 touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = touchData.timestamp_nanoseconds;
@@ -296,7 +340,17 @@ void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
         } else {
             TouchContainer & touchContainer = data[0];
             bool moved = touchContainer.touch.x != touchData.x || touchContainer.touch.y != touchData.y;
+            auto t = touchContainer.touch.timestamp_nanoseconds;
+            auto tu = touchContainer.touch.timestamp_nanoseconds_TOUCH_UP;
+            auto tm = touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE;
+            auto td = touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN;
+            auto tc = touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED;
             touchContainer.touch = touchData;
+            touchContainer.touch.timestamp_nanoseconds = t;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_UP = tu;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE = tm;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN = td;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = tc;
             touchContainer.touch.moved = moved;
             touchContainer.touch.state = TOUCH_CANCELLED;
             touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = touchData.timestamp_nanoseconds;
