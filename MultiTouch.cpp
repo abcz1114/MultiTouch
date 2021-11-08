@@ -33,26 +33,6 @@ MultiTouch::TouchData::TouchData(long identity, uint64_t timestamp_nanoseconds, 
     this->pressure = pressure;
     this->state = state;
     this->moved = moved;
-    switch(state) {
-        case TOUCH_DOWN: {
-            this->timestamp_nanoseconds_TOUCH_DOWN = this->timestamp_nanoseconds;
-            break;
-        }
-        case TOUCH_MOVE: {
-            this->timestamp_nanoseconds_TOUCH_MOVE = this->timestamp_nanoseconds;
-            break;
-        }
-        case TOUCH_UP: {
-            this->timestamp_nanoseconds_TOUCH_UP = this->timestamp_nanoseconds;
-            break;
-        }
-        case TOUCH_CANCELLED: {
-            this->timestamp_nanoseconds_TOUCH_CANCELLED = this->timestamp_nanoseconds;
-            break;
-        }
-        case NONE:
-            break;
-    }
 }
 
 MultiTouch::TouchContainer::TouchContainer() {
@@ -134,6 +114,7 @@ void MultiTouch::addTouch(const MultiTouch::TouchData & touchData) {
             found = true;
             touchContainer.touch = touchData;
             touchContainer.touch.state = TOUCH_DOWN;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_DOWN = touchData.timestamp_nanoseconds;
             touchContainer.used = true;
             touchCount++;
             index = i;
@@ -192,6 +173,7 @@ void MultiTouch::moveTouch(const MultiTouch::TouchData & touchData) {
                 touchContainer.touch = touchData;
                 touchContainer.touch.moved = moved;
                 touchContainer.touch.state = TOUCH_MOVE;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_MOVE = touchData.timestamp_nanoseconds;
                 index = i;
             }
         }
@@ -239,6 +221,7 @@ void MultiTouch::removeTouch(const MultiTouch::TouchData & touchData) {
                 touchContainer.touch = touchData;
                 touchContainer.touch.moved = moved;
                 touchContainer.touch.state = TOUCH_UP;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_UP = touchData.timestamp_nanoseconds;
                 touchContainer.used = false;
                 index = i;
             }
@@ -296,6 +279,7 @@ void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
                 touchContainer.touch = touchData;
                 touchContainer.touch.moved = moved;
                 touchContainer.touch.state = TOUCH_CANCELLED;
+                touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = touchData.timestamp_nanoseconds;
                 touchContainer.used = false;
                 index = i;
             } else {
@@ -315,6 +299,7 @@ void MultiTouch::cancelTouch(const MultiTouch::TouchData & touchData) {
             touchContainer.touch = touchData;
             touchContainer.touch.moved = moved;
             touchContainer.touch.state = TOUCH_CANCELLED;
+            touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = touchData.timestamp_nanoseconds;
             touchContainer.used = false;
         }
         index = 0;
@@ -335,6 +320,7 @@ void MultiTouch::cancelTouch(long identity, float x, float y) {
 }
 
 void MultiTouch::cancelTouch() {
+    uint64_t timestamp = static_cast<uint64_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     // cancel the first touch
     if (maxSupportedTouches <= 0) {
         Log::Error("the maximum number of supported touches must be greater than zero");
@@ -342,6 +328,7 @@ void MultiTouch::cancelTouch() {
         TouchContainer & touchContainer = data[0];
         touchContainer.touch.moved = false;
         touchContainer.touch.state = TOUCH_CANCELLED;
+        touchContainer.touch.timestamp_nanoseconds_TOUCH_CANCELLED = timestamp;
         touchContainer.used = false;
     }
     index = 0;
@@ -369,6 +356,10 @@ std::string MultiTouch::toString() const {
             s += ", action : " + stateToString(touch.state);
             s += ", identity : " + std::to_string(touch.identity);
             s += ", timestamp (nanoseconds) : " + std::to_string(touch.timestamp_nanoseconds);
+            s += ", timestamp (TOUCH_DOWN nanoseconds) : " + std::to_string(touch.timestamp_nanoseconds_TOUCH_DOWN);
+            s += ", timestamp (TOUCH_MOVE nanoseconds) : " + std::to_string(touch.timestamp_nanoseconds_TOUCH_MOVE);
+            s += ", timestamp (TOUCH_UP nanoseconds) : " + std::to_string(touch.timestamp_nanoseconds_TOUCH_UP);
+            s += ", timestamp (TOUCH_CANCELLED nanoseconds) : " + std::to_string(touch.timestamp_nanoseconds_TOUCH_CANCELLED);
             s += ", did touch move : "; s += touch.moved ? "True" : "False";
             s += ", x : " + std::to_string(touch.x);
             s += ", y : " + std::to_string(touch.y);
