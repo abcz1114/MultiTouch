@@ -5,9 +5,10 @@
 #ifndef GRAPHICAL_TOOL_KIT_MOTIONEVENT_MULTITOUCH_H
 #define GRAPHICAL_TOOL_KIT_MOTIONEVENT_MULTITOUCH_H
 
-#include "Utils/Array.h"
 #include <string>
 #include <inttypes.h> // uint64_t
+#include <vector>
+#include "DiligentLog/Log.h"
 
 class MultiTouch {
 public:
@@ -49,7 +50,7 @@ private:
         TouchContainer(bool used, const TouchData & touch);
     };
     
-    Array<TouchContainer> data;
+    std::vector<TouchContainer> data;
     
     long maxSupportedTouches = 0;
     long touchCount = 0;

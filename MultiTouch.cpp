@@ -65,17 +65,15 @@ MultiTouch::Iterator::Iterator(MultiTouch * multiTouch) {
 }
 
 bool MultiTouch::Iterator::hasNext() {
-    try {
-        for (long i = index; i < multiTouch->maxSupportedTouches; i++) {
-            TouchContainer & tc = multiTouch->data[i];
-            // a container can be marked as unused but have a touch state != NONE
-            // in this case, it is either freshly removed, or freshly cancelled
-            if (tc.touch.state != NONE) {
-                index = i;
-                return true;
-            }
+    for (long i = index; i < multiTouch->maxSupportedTouches; i++) {
+        TouchContainer & tc = multiTouch->data[i];
+        // a container can be marked as unused but have a touch state != NONE
+        // in this case, it is either freshly removed, or freshly cancelled
+        if (tc.touch.state != NONE) {
+            index = i;
+            return true;
         }
-    } catch (const std::runtime_error & error) {}
+    }
     return false;
 }
 
